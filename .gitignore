@@ -1,4 +1,3 @@
-Packages
 .build
 xcuserdata
 *.xcodeproj
@@ -10,3 +9,6 @@ db.sqlite
 .env.*
 ! .env.example
 .vscode
+
+StableDiffusion/
+SuperResolution/
