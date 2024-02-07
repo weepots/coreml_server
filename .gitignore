@@ -10,5 +10,8 @@ db.sqlite
 ! .env.example
 .vscode
 
-StableDiffusion/
-SuperResolution/
+/Sources/App/StableDiffusion/
+/Sources/App/SuperResolution/
+/Sources/App/BackgroundRemover/
+
+

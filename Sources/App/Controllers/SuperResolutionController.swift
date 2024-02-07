@@ -22,7 +22,6 @@ struct SuperResolutionController: RouteCollection {
     }
 
     func superresolution(req: Request) throws -> EventLoopFuture<Response> {
-        
         let superResRequest = try req.content.decode(SuperResRequest.self)
         let base64Image = superResRequest.image
         let configuration = MLModelConfiguration()
@@ -35,17 +34,16 @@ struct SuperResolutionController: RouteCollection {
         var response = Response()
 //        var imageResponse = SuperResResponse(image:"")
         if let output = try? realesrgan512(configuration: configuration).prediction(input:pixelbuffer!).activation_out{
-            print(output)
             let ciImage = CIImage(cvImageBuffer:output)
-            let context = CIContext()
+//            let context = CIContext()
             
 //            let cgOutputImage = context.createCGImage(ciImage, from: ciImage.extent)
 //            try? write(cgimage: cgOutputImage!, to: URL(fileURLWithPath: "/Users/alexander/Documents/fyp/macosai/coreml_server/output.jpg"))
 
-            let imageData = try ciImageToJPEGData(ciImage: ciImage)
+            let imageData = try ciImageToPNGData(ciImage: ciImage)
             // Create a Vapor Response with the image data
             response = Response(status: .ok, body: .init(data: imageData))
-                    response.headers.contentType = .jpeg
+                    response.headers.contentType = .png
 
 
         }
@@ -80,28 +78,28 @@ struct SuperResolutionController: RouteCollection {
         return base64String
     }
     
-    func ciImageToJPEGData(ciImage: CIImage, compressionQuality: CGFloat = 0.8) throws -> Data {
-        let context = CIContext()
-        guard let cgImage = context.createCGImage(ciImage, from: ciImage.extent) else {
-            throw Abort(.internalServerError, reason: "Failed to create CGImage from CIImage")
-        }
-
-        let options: NSDictionary = [
-            kCGImageDestinationLossyCompressionQuality: compressionQuality as NSNumber
-        ]
-
-        let imageData = NSMutableData()
-        guard let destination = CGImageDestinationCreateWithData(imageData, kUTTypeJPEG, 1, nil) else {
-            throw Abort(.internalServerError, reason: "Failed to create CGImageDestination")
-        }
-
-        CGImageDestinationAddImage(destination, cgImage, options)
-        guard CGImageDestinationFinalize(destination) else {
-            throw Abort(.internalServerError, reason: "Failed to finalize CGImageDestination")
-        }
-
-        return imageData as Data
-    }
+//    func ciImageToJPEGData(ciImage: CIImage, compressionQuality: CGFloat = 0.8) throws -> Data {
+//        let context = CIContext()
+//        guard let cgImage = context.createCGImage(ciImage, from: ciImage.extent) else {
+//            throw Abort(.internalServerError, reason: "Failed to create CGImage from CIImage")
+//        }
+//
+//        let options: NSDictionary = [
+//            kCGImageDestinationLossyCompressionQuality: compressionQuality as NSNumber
+//        ]
+//
+//        let imageData = NSMutableData()
+//        guard let destination = CGImageDestinationCreateWithData(imageData, kUTTypeJPEG, 1, nil) else {
+//            throw Abort(.internalServerError, reason: "Failed to create CGImageDestination")
+//        }
+//
+//        CGImageDestinationAddImage(destination, cgImage, options)
+//        guard CGImageDestinationFinalize(destination) else {
+//            throw Abort(.internalServerError, reason: "Failed to finalize CGImageDestination")
+//        }
+//
+//        return imageData as Data
+//    }
 
     
    

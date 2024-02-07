@@ -108,22 +108,13 @@ struct StableDiffusionController: RouteCollection {
         let cgImage = images[0]
         
 //        _ = try saveImages(images, logNames: true)
-        let jpegImage =  convertCGImageToJPEGData(cgImage: cgImage!)
-        var response = Response(status: .ok, body: .init(data: jpegImage!))
-                response.headers.contentType = .jpeg
+        let pngImage =  convertCGImageToPNGData(cgImage: cgImage!)
+        let response = Response(status: .ok, body: .init(data: pngImage!))
+                response.headers.contentType = .png
         
-        
-        
-        
-
         
         
         return req.eventLoop.future(response)
-//        response = Response(status: .ok, body: .init(data: ))
-//                response.headers.contentType = .jpeg
-//
-//
-//        return req.eventLoop.future(response)
         
     }
     func log(_ str: String, term: String = "") {
@@ -144,25 +135,25 @@ struct StableDiffusionController: RouteCollection {
         log("\n")
     }
     
-    func convertCGImageToJPEGData(cgImage: CGImage) -> Data? {
-        guard let destinationData = NSMutableData() as CFMutableData?,
-              let destination = CGImageDestinationCreateWithData(destinationData as CFMutableData, kUTTypeJPEG, 1, nil) else {
-            // Handle the case when creating CGImageDestination fails
-            return nil
-        }
-
-        // Add the CGImage to the destination with compression quality
-        let properties: [CFString: Any] = [kCGImageDestinationLossyCompressionQuality: 1.0]
-        CGImageDestinationAddImage(destination, cgImage, properties as CFDictionary)
-
-        // Finalize the destination to produce the JPEG data
-        guard CGImageDestinationFinalize(destination) else {
-            // Handle the case when finalizing the destination fails
-            return nil
-        }
-
-        return destinationData as Data
-    }
+//    func convertCGImageToJPEGData(cgImage: CGImage) -> Data? {
+//        guard let destinationData = NSMutableData() as CFMutableData?,
+//              let destination = CGImageDestinationCreateWithData(destinationData as CFMutableData, kUTTypePNG, 1, nil) else {
+//            // Handle the case when creating CGImageDestination fails
+//            return nil
+//        }
+//
+//        // Add the CGImage to the destination with compression quality
+//        let properties: [CFString: Any] = [kCGImageDestinationLossyCompressionQuality: 1.0]
+//        CGImageDestinationAddImage(destination, cgImage, properties as CFDictionary)
+//
+//        // Finalize the destination to produce the JPEG data
+//        guard CGImageDestinationFinalize(destination) else {
+//            // Handle the case when finalizing the destination fails
+//            return nil
+//        }
+//
+//        return destinationData as Data
+//    }
     
 //    func saveImages(
 //        _ images: [CGImage?],

@@ -23,5 +23,6 @@ func routes(_ app: Application) throws {
     
     try app.register(collection: SuperResolutionController())
     try app.register(collection: StableDiffusionController())
+    try app.register(collection: BackgroundRemoverController())
 
 }
