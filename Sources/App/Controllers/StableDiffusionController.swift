@@ -43,8 +43,8 @@ struct StableDiffusionController: RouteCollection {
         config.computeUnits = .cpuAndGPU
         let resourceURL = URL(filePath: resourcePath)
         let pipeline: StableDiffusionPipelineProtocol
-        var seed = 93
-        var imageCount = 1
+        var seed = Int(stableDiffusionRequest.seed)!
+        var imageCount = Int(stableDiffusionRequest.numImages)!
         var outputPath: String = "./"
         var scaleFactor: Float32 = 0.1825
         var controlnet: [String] = []
@@ -105,15 +105,30 @@ struct StableDiffusionController: RouteCollection {
                 }
                 return true
             }
-        let cgImage = images[0]
+//        let cgImage = images[0]
+//        let url = URL(fileURLWithPath: "/Users/alexander/Downloads/lena_std.jpg")
+//        let _ = print("url = \(url)")
+//        let data = try! Data(contentsOf: url)
+//        let testCIImage = CIImage(data : data)!
+//        let cgImage = testCIImage.convertCIImageToCGImage()
+//        let images = [cgImage, cgImage, cgImage, cgImage]
+        
+        var outputArray: [Data] = []
+        for image in images {
+            let pngImage = convertCGImageToPNGData(cgImage: image!)!
+            outputArray.append(pngImage)
+        }
+        let base64Images = outputArray.map{$0.base64EncodedString()}
+//        let arrayResponse = ImageResponse(base64Data: outputArray)
+        
+//        let base64Images =
         
 //        _ = try saveImages(images, logNames: true)
-        let pngImage =  convertCGImageToPNGData(cgImage: cgImage!)
-        let response = Response(status: .ok, body: .init(data: pngImage!))
-                response.headers.contentType = .png
-        
-        
-        
+//        let pngImage =  convertCGImageToPNGData(cgImage: cgImage!)
+//        let response = Response(status: .ok, body: .init(data: pngImage!))
+        let json = try JSONSerialization.data(withJSONObject: base64Images, options: [])
+        let response = Response(status: .ok, body: .init(data:json))
+        response.headers.replaceOrAdd(name: .contentType, value: "application/json")
         return req.eventLoop.future(response)
         
     }

@@ -15,7 +15,7 @@ struct BackgroundRemoverController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
         routes.on(.POST,
                   "backgroundRemove",
-                  body: .collect(maxSize: ByteCount(value: 2000*1024)),
+                  body: .collect(maxSize: ByteCount(value: 20000*1024)),
                   use: removeBackground
         )
     }
@@ -59,15 +59,26 @@ struct BackgroundRemoverController: RouteCollection {
         let context = CIContext()
         ///construct sr image
         let cgOutputImage =  context.createCGImage(compositeImage!, from:compositeImage!.extent)
-        let pngImage =  convertCGImageToPNGData(cgImage: cgOutputImage!)
-        let response = Response(status: .ok, body: .init(data: pngImage!))
-                response.headers.contentType = .png
+        var images: [Data] = []
+        if let pngImage = convertCGImageToPNGData(cgImage: cgOutputImage!){
+            images = [pngImage, pngImage, pngImage]
+        }
+        
+
+//        let images: [Data] = [pngImage]
+        let base64Images = images.map { $0.base64EncodedString() }
+        
+        let json = try JSONSerialization.data(withJSONObject: base64Images, options: [])
+        let response = Response(status: .ok, body: .init(data:json))
+        response.headers.replaceOrAdd(name: .contentType, value: "application/json")
+        return req.eventLoop.future(response)
+//        let response = Response(status: .ok, body: .init(data: pngImage!))
+//                response.headers.contentType = .png
         
 //        let temp = CIImage(cvImageBuffer: segmentedUpscale!)
 //        let cgSaveImage = context.createCGImage(outputImage!, from:outputImage!.extent)
 //        try? write(cgimage: cgSaveImage!, to: URL(fileURLWithPath: "output.png"))
         
-        return req.eventLoop.future(response)
     
     }
     func write(cgimage: CGImage, to url: URL) throws {

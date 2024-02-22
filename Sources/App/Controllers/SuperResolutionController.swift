@@ -16,7 +16,7 @@ struct SuperResolutionController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
         routes.on(.POST,
                   "superRes",
-                  body: .collect(maxSize: ByteCount(value: 2000*1024)),
+                  body: .collect(maxSize: ByteCount(value: 20000*1024)),
                   use: superresolution
         )
     }
@@ -30,20 +30,29 @@ struct SuperResolutionController: RouteCollection {
         let data = try! Data(base64Encoded: base64Image)
         let testCIImage = CIImage(data : data!)!
         let cgImage = testCIImage.convertCIImageToCGImage()
-        let pixelbuffer = cgImage.pixelBuffer()
+        let pixelbufferRaw = cgImage.pixelBuffer()
+        let pixelbuffer = resizePixelBuffer(pixelbufferRaw!, width:512, height:512)
         var response = Response()
 //        var imageResponse = SuperResResponse(image:"")
         if let output = try? realesrgan512(configuration: configuration).prediction(input:pixelbuffer!).activation_out{
             let ciImage = CIImage(cvImageBuffer:output)
-//            let context = CIContext()
+            let context = CIContext()
             
 //            let cgOutputImage = context.createCGImage(ciImage, from: ciImage.extent)
 //            try? write(cgimage: cgOutputImage!, to: URL(fileURLWithPath: "/Users/alexander/Documents/fyp/macosai/coreml_server/output.jpg"))
 
             let imageData = try ciImageToPNGData(ciImage: ciImage)
+            let images: [Data] = [imageData]
+            let base64Images = images.map { $0.base64EncodedString() }
+            
+            let json = try JSONSerialization.data(withJSONObject: base64Images, options: [])
+            let response = Response(status: .ok, body: .init(data:json))
+            response.headers.replaceOrAdd(name: .contentType, value: "application/json")
+            return req.eventLoop.future(response)
+            
             // Create a Vapor Response with the image data
-            response = Response(status: .ok, body: .init(data: imageData))
-                    response.headers.contentType = .png
+//            response = Response(status: .ok, body: .init(data: imageData))
+//                    response.headers.contentType = .png
 
 
         }
