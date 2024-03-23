@@ -13,6 +13,7 @@ import CoreImage
 
 struct BackgroundRemoverController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
+        //add /backgroundRemove as route
         routes.on(.POST,
                   "backgroundRemove",
                   body: .collect(maxSize: ByteCount(value: 20000*1024)),
@@ -37,19 +38,7 @@ struct BackgroundRemoverController: RouteCollection {
         let segmented = try? u2net(configuration: configuration).prediction(input:pixelbuffer!).out_p1
         let segmentedCI = CIImage(cvImageBuffer:segmented!)
         let segmentedUpscale = try ciimageUpscale(sourceImage: segmentedCI, targetHeight:ogHeight, targetWidth: ogWidth)
-//        let resizeFilter = CIFilter(name:"CILanczosScaleTransform")!
-//        let targetSize = NSSize(width:ogWidth, height:ogHeight)
-//        let scale = targetSize.height / (segmentedCI.extent.height)
-//        let aspectRatio = targetSize.width/((segmentedCI.extent.width) * scale)
-//
-//        // Apply resizing
-//        resizeFilter.setValue(segmentedCI, forKey: kCIInputImageKey)
-//        resizeFilter.setValue(scale, forKey: kCIInputScaleKey)
-//        resizeFilter.setValue(aspectRatio, forKey: kCIInputAspectRatioKey)
-//        let outputImage = resizeFilter.outputImage
-        
-//        let segmentedUpscale = resizePixelBuffer(segmented!, width:ogWidth, height:ogHeight)
-//        let ciSegmented = CIImage(cvImageBuffer: segmentedUpscale!).applyingGaussianBlur(sigma: 3)
+
         let ciSegmented = segmentedUpscale.applyingGaussianBlur(sigma: 3)
         let compositeFilter = CIFilter(name: "CIBlendWithMask")!
         compositeFilter.setValue(testCIImage, forKey: kCIInputImageKey)
@@ -57,15 +46,11 @@ struct BackgroundRemoverController: RouteCollection {
         compositeFilter.setValue(CIImage.empty(), forKey: kCIInputBackgroundImageKey)
         let compositeImage = compositeFilter.outputImage
         let context = CIContext()
-        ///construct sr image
         let cgOutputImage =  context.createCGImage(compositeImage!, from:compositeImage!.extent)
         var images: [Data] = []
         if let pngImage = convertCGImageToPNGData(cgImage: cgOutputImage!){
             images = [pngImage, pngImage, pngImage]
         }
-        
-
-//        let images: [Data] = [pngImage]
         let base64Images = images.map { $0.base64EncodedString() }
         
         let json = try JSONSerialization.data(withJSONObject: base64Images, options: [])
